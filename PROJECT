@@ -1,0 +1,7 @@
+domain: mad.md
+repo: github.com/danacr/drone
+resources:
+- group: experiments
+  kind: Drone
+  version: v1
+version: "2"

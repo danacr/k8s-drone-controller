@@ -1,0 +1,26 @@
+# permissions to do edit drones.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: drone-editor-role
+rules:
+  - apiGroups:
+      - experiments.mad.md
+    resources:
+      - drones
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - experiments.mad.md
+    resources:
+      - drones/status
+    verbs:
+      - get
+      - patch
+      - update

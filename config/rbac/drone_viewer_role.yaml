@@ -1,0 +1,20 @@
+# permissions to do viewer drones.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: drone-viewer-role
+rules:
+  - apiGroups:
+      - experiments.mad.md
+    resources:
+      - drones
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - experiments.mad.md
+    resources:
+      - drones/status
+    verbs:
+      - get

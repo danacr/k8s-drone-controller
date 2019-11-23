@@ -1,0 +1,7 @@
+apiVersion: experiments.mad.md/v1
+kind: Drone
+metadata:
+  name: drone-sample
+spec:
+  # Add fields here
+  howmany: 0
