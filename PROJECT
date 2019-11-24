@@ -4,4 +4,7 @@ resources:
 - group: experiments
   kind: Drone
   version: v1
+- group: experiments
+  kind: Swarm
+  version: v1
 version: "2"

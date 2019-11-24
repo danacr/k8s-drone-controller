@@ -22,41 +22,42 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// DroneSpec defines the desired state of Drone
-type DroneSpec struct {
+// SwarmSpec defines the desired state of Swarm
+type SwarmSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Name string `json:"name,omitempty"`
-	// Foo is an example field of Drone. Edit Drone_types.go to remove/update
+
+	// Foo is an example field of Swarm. Edit Swarm_types.go to remove/update
+	HowMany *int32 `json:"howmany,omitempty"`
 }
 
-// DroneStatus defines the observed state of Drone
-type DroneStatus struct {
-	Name string `json:"name,omitempty"`
+// SwarmStatus defines the observed state of Swarm
+type SwarmStatus struct {
+	FlyingDrones int32 `json:"flyingdrones,omitempty"`
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
 
-// Drone is the Schema for the drones API
-type Drone struct {
+// Swarm is the Schema for the swarms API
+type Swarm struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DroneSpec   `json:"spec,omitempty"`
-	Status DroneStatus `json:"status,omitempty"`
+	Spec   SwarmSpec   `json:"spec,omitempty"`
+	Status SwarmStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// DroneList contains a list of Drone
-type DroneList struct {
+// SwarmList contains a list of Swarm
+type SwarmList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Drone `json:"items"`
+	Items           []Swarm `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Drone{}, &DroneList{})
+	SchemeBuilder.Register(&Swarm{}, &SwarmList{})
 }

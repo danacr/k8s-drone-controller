@@ -19,6 +19,7 @@ import (
 	"flag"
 	"os"
 
+	experimentsv1 "github.com/danacr/drone/api/v1"
 	madmdv1 "github.com/danacr/drone/api/v1"
 	"github.com/danacr/drone/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,6 +39,7 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = madmdv1.AddToScheme(scheme)
+	_ = experimentsv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -70,6 +72,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Drone")
+		os.Exit(1)
+	}
+	if err = (&controllers.SwarmReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Swarm"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Swarm")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

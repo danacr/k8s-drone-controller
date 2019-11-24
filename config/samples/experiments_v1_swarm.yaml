@@ -1,0 +1,7 @@
+apiVersion: experiments.mad.md/v1
+kind: Swarm
+metadata:
+  name: swarm-sample
+spec:
+  # Add fields here
+  foo: bar
