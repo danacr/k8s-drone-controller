@@ -20,7 +20,6 @@ import (
 	"os"
 
 	experimentsv1 "github.com/danacr/drone/api/v1"
-	madmdv1 "github.com/danacr/drone/api/v1"
 	"github.com/danacr/drone/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -38,7 +37,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = madmdv1.AddToScheme(scheme)
+	_ = experimentsv1.AddToScheme(scheme)
 	_ = experimentsv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }

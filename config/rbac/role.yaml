@@ -14,9 +14,10 @@ rules:
   - create
   - patch
 - apiGroups:
-  - apps
+  - ""
   resources:
-  - deployments
+  - nodes
+  - pods
   verbs:
   - create
   - delete
@@ -39,7 +40,28 @@ rules:
 - apiGroups:
   - experiments.mad.md
   resources:
+  - drones
+  - swarms
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - experiments.mad.md
+  resources:
   - drones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - experiments.mad.md
+  resources:
+  - swarms/status
   verbs:
   - get
   - patch

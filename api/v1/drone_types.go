@@ -26,13 +26,12 @@ import (
 type DroneSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Name string `json:"name,omitempty"`
 	// Foo is an example field of Drone. Edit Drone_types.go to remove/update
 }
 
 // DroneStatus defines the observed state of Drone
 type DroneStatus struct {
-	Name string `json:"name,omitempty"`
+	Flying bool `json:"flying,omitempty"`
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }

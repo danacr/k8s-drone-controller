@@ -6,18 +6,18 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.4
   creationTimestamp: null
-  name: drones.experiments.mad.md
+  name: swarms.experiments.mad.md
 spec:
   group: experiments.mad.md
   names:
-    kind: Drone
-    listKind: DroneList
-    plural: drones
-    singular: drone
+    kind: Swarm
+    listKind: SwarmList
+    plural: swarms
+    singular: swarm
   scope: Namespaced
   validation:
     openAPIV3Schema:
-      description: Drone is the Schema for the drones API
+      description: Swarm is the Schema for the swarms API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -32,13 +32,20 @@ spec:
         metadata:
           type: object
         spec:
-          description: DroneSpec defines the desired state of Drone
+          description: SwarmSpec defines the desired state of Swarm
+          properties:
+            howmany:
+              description: Foo is an example field of Swarm. Edit Swarm_types.go to
+                remove/update
+              format: int32
+              type: integer
           type: object
         status:
-          description: DroneStatus defines the observed state of Drone
+          description: SwarmStatus defines the observed state of Swarm
           properties:
-            flying:
-              type: boolean
+            flyingdrones:
+              format: int32
+              type: integer
           type: object
       type: object
   version: v1

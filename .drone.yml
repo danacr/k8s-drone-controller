@@ -1,0 +1,56 @@
+kind: pipeline
+type: docker
+name: arm64
+
+platform:
+  arch: arm64
+
+steps:
+  - name: docker-arm64
+    platform:
+    image: plugins/docker
+    settings:
+      username: danacr
+      password:
+        from_secret: docker_password
+      repo: danacr/drone-controller
+      tags: latest-linux-arm64
+
+---
+kind: pipeline
+type: docker
+name: amd64
+
+platform:
+  arch: amd64
+
+steps:
+  - name: docker-amd64
+    image: plugins/docker
+    settings:
+      username: danacr
+      password:
+        from_secret: docker_password
+      repo: danacr/drone-controller
+      tags: latest-linux-amd64
+
+---
+kind: pipeline
+name: manifests
+
+steps:
+  - name: manifest
+    image: plugins/manifest
+    settings:
+      username: danacr
+      password:
+        from_secret: docker_password
+      target: danacr/drone-controller:latest
+      template: danacr/drone-controller:latest-OS-ARCH
+      platforms:
+        - linux/amd64
+        - linux/arm64
+
+depends_on:
+  - arm64
+  - amd64

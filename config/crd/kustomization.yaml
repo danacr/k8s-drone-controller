@@ -3,7 +3,7 @@
 # It should be run by config/default
 resources:
   - bases/experiments.mad.md_drones.yaml
-- bases/experiments.mad.md_swarms.yaml
+  - bases/experiments.mad.md_swarms.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

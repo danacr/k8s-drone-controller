@@ -1,7 +1,6 @@
 apiVersion: experiments.mad.md/v1
 kind: Swarm
 metadata:
-  name: swarm-sample
+  name: mypersonalswarm
 spec:
-  # Add fields here
-  foo: bar
+  howmany: 0

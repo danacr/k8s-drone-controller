@@ -27,7 +27,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	madmdv1 "github.com/danacr/drone/api/v1"
+	experimentsv1 "github.com/danacr/drone/api/v1"
 )
 
 // DroneReconciler reconciles a Drone object
@@ -39,7 +39,7 @@ type DroneReconciler struct {
 
 // +kubebuilder:rbac:groups=experiments.mad.md,resources=drones,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=experiments.mad.md,resources=drones/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=nodes;pods,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile stuff
@@ -49,7 +49,7 @@ func (r *DroneReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// your logic here
 	log.Info("fetching Drone resource")
-	Drone := madmdv1.Drone{}
+	Drone := experimentsv1.Drone{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &Drone); err != nil {
 		log.Error(err, "failed to get Drone resource")
 		// Ignore NotFound errors as they will be retried automatically if the
@@ -57,91 +57,91 @@ func (r *DroneReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := r.cleanupOwnedResources(ctx, log, &Drone); err != nil {
-		log.Error(err, "failed to delete old drones")
-		return ctrl.Result{}, err
-	}
-
 	log.Info("checking if we have an existing drone")
 	pod := core.Pod{}
-	err := r.Client.Get(ctx, client.ObjectKey{Namespace: Drone.Namespace, Name: Drone.Spec.Name}, &pod)
+	err := r.Client.Get(ctx, client.ObjectKey{Namespace: Drone.Namespace, Name: Drone.Name}, &pod)
 	if apierrors.IsNotFound(err) {
-		log.Info("could not find existing Drone, creating one...")
+		log.Info("could not find existing Drone, trying to create one...")
 
-		pod = *buildPod(Drone)
-		if err := r.Client.Create(ctx, &pod); err != nil {
-			log.Error(err, "failed to create drone")
+		// get list of available nodes that are drones
+		dronenodes := core.NodeList{}
+		if err := r.List(ctx, &dronenodes, client.MatchingLabels{"node-role.kubernetes.io/drone": "drone"}); err != nil {
+			return ctrl.Result{}, err
+		}
+		// get list of running pods
+		dronepods := core.PodList{}
+		if err := r.List(ctx, &dronepods, client.InNamespace(Drone.Namespace)); err != nil {
 			return ctrl.Result{}, err
 		}
 
-		log.Info("created Drone")
-		return ctrl.Result{}, nil
+		var dronePodNodeNameList []string
+		for _, p := range dronepods.Items {
+			dronePodNodeNameList = append(dronePodNodeNameList, p.Spec.NodeName)
+		}
+
+		for _, dronenode := range dronenodes.Items {
+			if !stringInSlice(dronenode.Name, dronePodNodeNameList) {
+
+				// if the node is free, schedule a drone-pod
+				pod = *buildPod(Drone, dronenode.Name)
+				if err := r.Client.Create(ctx, &pod); err != nil {
+					log.Error(err, "failed to create drone")
+					return ctrl.Result{}, err
+				}
+
+				log.Info("created Drone")
+				log.Info("updating Drone resource status")
+				Drone.Status.Flying = true
+				if r.Update(ctx, &Drone); err != nil {
+					log.Error(err, "failed to update Drone")
+					return ctrl.Result{}, err
+				}
+
+			} else {
+				log.Error(err, "Not enough drone nodes")
+				Drone.Status.Flying = false
+				if r.Update(ctx, &Drone); err != nil {
+					log.Error(err, "failed to update Drone")
+					return ctrl.Result{}, err
+				}
+				return ctrl.Result{}, nil
+			}
+
+			return ctrl.Result{}, nil
+		}
+
 	}
 	if err != nil {
 		log.Error(err, "failed to get Drone resource")
 		return ctrl.Result{}, err
 	}
 
-	log.Info("updating Drone resource status")
-	Drone.Status.Name = pod.Name
-	if r.Client.Status().Update(ctx, &Drone); err != nil {
-		log.Error(err, "failed to update Drone name")
-		return ctrl.Result{}, err
-	}
-
-	log.Info("resource status synced")
-
 	return ctrl.Result{}, nil
 }
 
-// cleanupOwnedResources will Delete any existing pod resources that
-// were created for the given Drone that no longer match the
-// Drone.spec.Name field.
-func (r *DroneReconciler) cleanupOwnedResources(ctx context.Context, log logr.Logger, Drone *madmdv1.Drone) error {
-	log.Info("finding existing pod for Drone resource")
-
-	// List all pods resources owned by this Drone
-	var pods core.PodList
-	if err := r.List(ctx, &pods, client.InNamespace(Drone.Namespace), client.MatchingField(podOwnerKey, Drone.Name)); err != nil {
-		return err
-	}
-
-	deleted := 0
-	for _, po := range pods.Items {
-		if po.Name == Drone.Spec.Name {
-			// If this pod's name matches the one on the Drone resource
-			// then do not delete it.
-			continue
-		}
-
-		if err := r.Client.Delete(ctx, &po); err != nil {
-			log.Error(err, "failed to delete Drone resource")
-			return err
-		}
-
-		deleted++
-	}
-
-	log.Info("finished cleaning up old Drones resources", "number_deleted", deleted)
-
-	return nil
-}
-
-func buildPod(Drone madmdv1.Drone) *core.Pod {
+func buildPod(Drone experimentsv1.Drone, dronenodename string) *core.Pod {
 	pod := core.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            Drone.Spec.Name,
+			Name:            Drone.Name,
 			Namespace:       Drone.Namespace,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&Drone, madmdv1.GroupVersion.WithKind("Drone"))},
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(&Drone, experimentsv1.GroupVersion.WithKind("Drone"))},
 		},
 		Spec: core.PodSpec{
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": dronenodename,
+			},
 			Containers: []core.Container{
 				{
 					Name:  "drone-pod",
 					Image: "danacr/drone-pod:latest",
 					Env: []core.EnvVar{
 						core.EnvVar{Name: "NODE",
-							Value: "rockpi0",
+							ValueFrom: &core.EnvVarSource{
+								FieldRef: &core.ObjectFieldSelector{
+									APIVersion: "v1",
+									FieldPath:  "spec.nodeName",
+								},
+							},
 						},
 					},
 				},
@@ -165,7 +165,7 @@ func (r *DroneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return nil
 		}
 		// ...make sure it's a Drone...
-		if owner.APIVersion != madmdv1.GroupVersion.String() || owner.Kind != "Drone" {
+		if owner.APIVersion != experimentsv1.GroupVersion.String() || owner.Kind != "Drone" {
 			return nil
 		}
 
@@ -176,7 +176,15 @@ func (r *DroneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&madmdv1.Drone{}).
+		For(&experimentsv1.Drone{}).
 		Owns(&core.Pod{}).
 		Complete(r)
+}
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
