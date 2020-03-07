@@ -1,9 +1,6 @@
 ### A Cloud Native Drone Management System
 
 [![Build Status](https://cloud.drone.io/api/badges/danacr/k8s-drone-controller/status.svg)](https://cloud.drone.io/danacr/k8s-drone-controller)
-# Drone Controller
-
-## Building Kubernetes Operators using [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 
 Kubernetes operators are controllers that manage custom resources. In our case, we will implement a simple one where we have a Swarm Resource that is composed of individual Drones.
 
@@ -141,8 +138,6 @@ func buildPod(Drone experimentsv1.Drone, dronenodename string) *core.Pod {
 }
 ```
 
-# Swarm Controller
-
 Since our controller knows what a drone is, the only way to start them now is by manually requesting drone, but what if we could use an aggregator of some sorts?
 
 This is why I chose to create the Swarm resource and controller:
@@ -230,7 +225,3 @@ func (r *SwarmReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 > Note: There appears to be a bug at the moment which causes drones to refuse flying on the first try, so the drone-pod container has to be rescheduled in order to start the drone.
 
 Once this operator is deployed on the cluster, you can request Drones from Kubernetes the same way you would request pods :)
-
-## Demo:
-
-[![Kubernetes Operators](https://img.youtube.com/vi/JPVgxnsvOs0/maxresdefault.jpg)](https://www.youtube.com/watch?v=JPVgxnsvOs0)
